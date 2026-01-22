@@ -90,7 +90,11 @@ export const getRepoCachePath = (remote: string): string | null => {
 	if (!parsed) {
 		return null;
 	}
-	return join(getReposDir(), parsed.host, parsed.owner, parsed.repo);
+	// normalize to lowercase for consistent cache paths across different URL casings
+	const host = parsed.host.toLowerCase();
+	const owner = parsed.owner.toLowerCase();
+	const repo = parsed.repo.toLowerCase();
+	return join(getReposDir(), host, owner, repo);
 };
 
 /**
