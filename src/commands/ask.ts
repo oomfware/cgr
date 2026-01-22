@@ -88,6 +88,7 @@ export const handler = async (args: Args): Promise<void> => {
 		contextPrompt,
 	];
 
+	console.error('spawning claude...');
 	const claude = spawn('claude', claudeArgs, {
 		cwd: cachePath,
 		stdio: 'inherit',
