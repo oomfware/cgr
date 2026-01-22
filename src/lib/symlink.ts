@@ -1,8 +1,8 @@
 import { symlink } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 /** parsed remote information */
-export type ParsedRemote = { host: string; owner: string; repo: string };
+export type ParsedRemote = { host: string; path: string };
 
 /** repository entry with all metadata needed for symlinking */
 export type RepoEntry = {
@@ -27,13 +27,15 @@ export const buildSymlinkDir = async (
 	const usedNames = new Set<string>();
 
 	for (const repo of repos) {
-		let name = repo.parsed.repo;
+		// use the last component of the path as the directory name
+		const repoName = basename(repo.parsed.path);
+		let name = repoName;
 		let suffix = 1;
 
 		// handle name conflicts
 		while (usedNames.has(name)) {
 			suffix++;
-			name = `${repo.parsed.repo}-${suffix}`;
+			name = `${repoName}-${suffix}`;
 		}
 
 		usedNames.add(name);

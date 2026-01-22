@@ -58,8 +58,9 @@ export type Args = InferValue<typeof schema>;
  */
 const exitInvalidRemote = (remote: string): never => {
 	console.error(`error: invalid remote URL: ${remote}`);
-	console.error('expected format: host/owner/repo, e.g.:');
+	console.error('expected format: host/path, e.g.:');
 	console.error('  github.com/user/repo');
+	console.error('  gitlab.com/group/subgroup/repo');
 	console.error('  https://github.com/user/repo');
 	console.error('  git@github.com:user/repo.git');
 	process.exit(1);
@@ -90,7 +91,7 @@ const parseRepoInput = (input: string): RepoEntry => {
  * @returns context prompt string
  */
 const buildSingleRepoContext = (repo: RepoEntry): string => {
-	const repoDisplay = `${repo.parsed.host}/${repo.parsed.owner}/${repo.parsed.repo}`;
+	const repoDisplay = `${repo.parsed.host}/${repo.parsed.path}`;
 	const branchDisplay = repo.branch ?? 'default branch';
 	return `You are examining ${repoDisplay} (checked out on ${branchDisplay}).`;
 };
@@ -103,7 +104,7 @@ const buildSingleRepoContext = (repo: RepoEntry): string => {
 const buildMultiRepoContext = (dirMap: Map<string, RepoEntry>): string => {
 	const lines = ['You are examining multiple repositories:', ''];
 	for (const [dirName, repo] of dirMap) {
-		const repoDisplay = `${repo.parsed.host}/${repo.parsed.owner}/${repo.parsed.repo}`;
+		const repoDisplay = `${repo.parsed.host}/${repo.parsed.path}`;
 		const branchDisplay = repo.branch ?? 'default branch';
 		lines.push(`- ${dirName}/ -> ${repoDisplay} (checked out on ${branchDisplay})`);
 	}
@@ -165,9 +166,7 @@ export const handler = async (args: Args): Promise<void> => {
 	if (args.with.length === 0) {
 		// clone or update repository
 		const remoteUrl = normalizeRemote(mainRepo.remote);
-		console.error(
-			`preparing repository: ${mainRepo.parsed.host}/${mainRepo.parsed.owner}/${mainRepo.parsed.repo}`,
-		);
+		console.error(`preparing repository: ${mainRepo.parsed.host}/${mainRepo.parsed.path}`);
 		try {
 			await ensureRepo(remoteUrl, mainRepo.cachePath, mainRepo.branch);
 		} catch (err) {
@@ -191,7 +190,7 @@ export const handler = async (args: Args): Promise<void> => {
 	const prepareResults = await Promise.allSettled(
 		allRepos.map(async (repo) => {
 			const remoteUrl = normalizeRemote(repo.remote);
-			const display = `${repo.parsed.host}/${repo.parsed.owner}/${repo.parsed.repo}`;
+			const display = `${repo.parsed.host}/${repo.parsed.path}`;
 			console.error(`  preparing: ${display}`);
 			await ensureRepo(remoteUrl, repo.cachePath, repo.branch);
 			return repo;
@@ -204,7 +203,7 @@ export const handler = async (args: Args): Promise<void> => {
 		const result = prepareResults[i]!;
 		if (result.status === 'rejected') {
 			const repo = allRepos[i]!;
-			const display = `${repo.parsed.host}/${repo.parsed.owner}/${repo.parsed.repo}`;
+			const display = `${repo.parsed.host}/${repo.parsed.path}`;
 			failures.push(`  ${display}: ${result.reason}`);
 		}
 	}

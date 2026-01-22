@@ -28,44 +28,86 @@ export const getCacheDir = (): string => {
  */
 export const getReposDir = (): string => join(getCacheDir(), 'repos');
 
+// windows reserved names that cannot be used as filenames
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
+// characters that are invalid in windows filenames
+const UNSAFE_CHARS = /[<>:"|?*\\]/g;
+
 /**
- * parses a git remote URL and extracts host, owner, and repo.
+ * sanitizes a path segment to be safe on all filesystems.
+ * encodes unsafe characters using percent-encoding and handles windows reserved names.
+ * @param segment the path segment to sanitize
+ * @returns sanitized segment
+ */
+const sanitizeSegment = (segment: string): string => {
+	let safe = segment
+		// encode percent first to avoid double-encoding
+		.replace(/%/g, '%25')
+		// encode windows-unsafe characters
+		.replace(UNSAFE_CHARS, (c) => `%${c.charCodeAt(0).toString(16).padStart(2, '0')}`)
+		// trim trailing dots and spaces (windows doesn't allow them)
+		.replace(/[. ]+$/, (m) =>
+			m
+				.split('')
+				.map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, '0')}`)
+				.join(''),
+		);
+
+	// handle windows reserved names by appending an underscore
+	if (WINDOWS_RESERVED.test(safe)) {
+		safe = `${safe}_`;
+	}
+
+	return safe;
+};
+
+/**
+ * parses a git remote URL and extracts host and path.
  * supports HTTP(S), SSH, and bare URLs (assumes HTTPS).
  * @param remote the remote URL to parse
  * @returns parsed components or null if invalid
  */
-export const parseRemote = (remote: string): { host: string; owner: string; repo: string } | null => {
-	// HTTP(S): https://github.com/user/repo or https://github.com/user/repo.git
-	const httpMatch = remote.match(/^https?:\/\/([^/]+)\/([^/]+)\/([^/]+?)(?:\.git)?$/);
+export const parseRemote = (remote: string): { host: string; path: string } | null => {
+	// HTTP(S): https://github.com/user/repo[/more/paths] or ending with .git
+	const httpMatch = remote.match(/^https?:\/\/([^/]+)\/(.+?)(?:\.git)?$/);
 	if (httpMatch) {
 		return {
 			host: httpMatch[1]!,
-			owner: httpMatch[2]!,
-			repo: httpMatch[3]!,
+			path: httpMatch[2]!,
 		};
 	}
 
-	// SSH: git@github.com:user/repo.git or git@github.com:user/repo
-	const sshMatch = remote.match(/^git@([^:]+):([^/]+)\/([^/]+?)(?:\.git)?$/);
+	// SSH: git@github.com:path/to/repo.git or git@github.com:path/to/repo
+	const sshMatch = remote.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
 	if (sshMatch) {
 		return {
 			host: sshMatch[1]!,
-			owner: sshMatch[2]!,
-			repo: sshMatch[3]!,
+			path: sshMatch[2]!,
 		};
 	}
 
 	// bare URL: github.com/user/repo (assumes HTTPS)
-	const bareMatch = remote.match(/^([^/]+)\/([^/]+)\/([^/]+?)(?:\.git)?$/);
+	const bareMatch = remote.match(/^([^/]+)\/(.+?)(?:\.git)?$/);
 	if (bareMatch) {
 		return {
 			host: bareMatch[1]!,
-			owner: bareMatch[2]!,
-			repo: bareMatch[3]!,
+			path: bareMatch[2]!,
 		};
 	}
 
 	return null;
+};
+
+/**
+ * sanitizes a parsed remote path for safe filesystem storage.
+ * @param parsed the parsed remote (host + path)
+ * @returns sanitized path segments joined with the system separator
+ */
+export const sanitizeRemotePath = (parsed: { host: string; path: string }): string => {
+	const host = sanitizeSegment(parsed.host.toLowerCase());
+	const pathSegments = parsed.path.toLowerCase().split('/').map(sanitizeSegment);
+	return join(host, ...pathSegments);
 };
 
 /**
@@ -90,11 +132,7 @@ export const getRepoCachePath = (remote: string): string | null => {
 	if (!parsed) {
 		return null;
 	}
-	// normalize to lowercase for consistent cache paths across different URL casings
-	const host = parsed.host.toLowerCase();
-	const owner = parsed.owner.toLowerCase();
-	const repo = parsed.repo.toLowerCase();
-	return join(getReposDir(), host, owner, repo);
+	return join(getReposDir(), sanitizeRemotePath(parsed));
 };
 
 /**
