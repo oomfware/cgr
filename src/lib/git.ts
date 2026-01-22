@@ -17,7 +17,12 @@ const git = (args: string[], cwd?: string): Promise<void> =>
 		debug(`git ${args.join(' ')}${cwd ? ` (in ${cwd})` : ''}`);
 		const proc = spawn('git', args, {
 			cwd,
-			stdio: debugEnabled ? 'inherit' : ['inherit', 'pipe', 'pipe'],
+			env: {
+				...process.env,
+				GIT_TERMINAL_PROMPT: '0',
+				GIT_ASKPASS: 'false',
+			},
+			stdio: debugEnabled ? ['ignore', 'inherit', 'inherit'] : ['ignore', 'pipe', 'pipe'],
 		});
 		let stderr = '';
 		if (!debugEnabled) {
@@ -50,7 +55,12 @@ const gitOutput = (args: string[], cwd?: string): Promise<string> =>
 		debug(`git ${args.join(' ')}${cwd ? ` (in ${cwd})` : ''}`);
 		const proc = spawn('git', args, {
 			cwd,
-			stdio: ['inherit', 'pipe', debugEnabled ? 'inherit' : 'pipe'],
+			env: {
+				...process.env,
+				GIT_TERMINAL_PROMPT: '0',
+				GIT_ASKPASS: 'false',
+			},
+			stdio: ['ignore', 'pipe', debugEnabled ? 'inherit' : 'pipe'],
 		});
 		let output = '';
 		let stderr = '';
