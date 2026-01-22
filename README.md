@@ -65,8 +65,8 @@ Use `npx @oomfware/cgr ask <repo> <question>` to ask questions about external re
 - `npx @oomfware/cgr ask -m sonnet github.com/shadcn-ui/ui "How do I configure path aliases so components install to the right location?"`
 - `npx @oomfware/cgr ask github.com/facebook/react -w github.com/vercel/next.js "How does Next.js integrate with React's server components?"`
 
-cgr works best with detailed questions. Include file/folder paths when you know them, and reference
-details from previous answers in follow-ups.
+Broad questions work for getting oriented; detailed questions get precise answers. Include
+file/folder paths when you know them, and reference details from previous answers in follow-ups.
 
 Run `npx @oomfware/cgr --help` for more options.
 ```
@@ -92,8 +92,8 @@ Useful repositories:
 - `github.com/tailwindlabs/tailwindcss` for Tailwind internals, plugin API
 - `github.com/bluesky-social/atproto` for AT Protocol, Bluesky API
 
-cgr works best with detailed questions. Include file/folder paths when you know them, and reference
-details from previous answers in follow-ups.
+Broad questions work for getting oriented; detailed questions get precise answers. Include
+file/folder paths when you know them, and reference details from previous answers in follow-ups.
 
 Run `npx @oomfware/cgr --help` for more options.
 ```
