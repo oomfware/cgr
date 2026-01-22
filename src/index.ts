@@ -16,6 +16,7 @@ const parser = or(
 );
 
 const result = run(parser, {
+	programName: 'cgr',
 	help: 'both',
 	version: { value: '0.1.0', mode: 'option' },
 	brief: message`ask questions about git repositories using Claude Code`,
