@@ -113,15 +113,24 @@ const listCachedRepos = (): {
 /**
  * prompts the user for confirmation.
  * @param msg the prompt message
- * @returns promise that resolves to true if confirmed
+ * @returns promise that resolves to true if confirmed, or exits on interrupt
  */
 const confirm = (msg: string): Promise<boolean> =>
 	new Promise((resolve) => {
+		let answered = false;
 		const rl = createInterface({
 			input: process.stdin,
 			output: process.stdout,
 		});
+		rl.on('close', () => {
+			if (!answered) {
+				// handle Ctrl+C or stream close
+				console.log();
+				process.exit(130);
+			}
+		});
 		rl.question(`${msg} [y/N] `, (answer) => {
+			answered = true;
 			rl.close();
 			resolve(answer.toLowerCase() === 'y');
 		});
