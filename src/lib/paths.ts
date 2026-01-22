@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import { mkdir, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -89,4 +91,44 @@ export const getRepoCachePath = (remote: string): string | null => {
 		return null;
 	}
 	return join(getReposDir(), parsed.host, parsed.owner, parsed.repo);
+};
+
+/**
+ * parses `remote#branch` syntax.
+ * @param input the input string, e.g. `github.com/owner/repo#develop`
+ * @returns object with remote and optional branch
+ */
+export const parseRemoteWithBranch = (input: string): { remote: string; branch?: string } => {
+	const hashIndex = input.lastIndexOf('#');
+	if (hashIndex === -1) {
+		return { remote: input };
+	}
+	return {
+		remote: input.slice(0, hashIndex),
+		branch: input.slice(hashIndex + 1),
+	};
+};
+
+/**
+ * returns the sessions directory within the cache.
+ * @returns the sessions directory path
+ */
+export const getSessionsDir = (): string => join(getCacheDir(), 'sessions');
+
+/**
+ * creates a new session directory with a random UUID.
+ * @returns the path to the created session directory
+ */
+export const createSessionDir = async (): Promise<string> => {
+	const sessionPath = join(getSessionsDir(), randomUUID());
+	await mkdir(sessionPath, { recursive: true });
+	return sessionPath;
+};
+
+/**
+ * removes a session directory.
+ * @param sessionPath the session directory path
+ */
+export const cleanupSessionDir = async (sessionPath: string): Promise<void> => {
+	await rm(sessionPath, { recursive: true, force: true });
 };

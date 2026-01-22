@@ -6,7 +6,7 @@ import { createInterface } from 'node:readline';
 import { argument, constant, type InferValue, message, object, option, string } from '@optique/core';
 import { optional } from '@optique/core/modifiers';
 
-import { getRepoCachePath, getReposDir } from '../lib/paths.ts';
+import { getRepoCachePath, getReposDir, getSessionsDir } from '../lib/paths.ts';
 
 export const schema = object({
 	command: constant('clean'),
@@ -142,16 +142,33 @@ const confirm = (msg: string): Promise<boolean> =>
  */
 export const handler = async (args: Args): Promise<void> => {
 	const reposDir = getReposDir();
+	const sessionsDir = getSessionsDir();
 
 	// clean all
 	if (args.all) {
-		if (!existsSync(reposDir)) {
-			console.log('no cached repositories found');
+		const reposExist = existsSync(reposDir);
+		const sessionsExist = existsSync(sessionsDir);
+
+		if (!reposExist && !sessionsExist) {
+			console.log('no cached data found');
 			return;
 		}
-		const size = getDirSize(reposDir);
-		console.log(`removing all cached repositories (${formatSize(size)})`);
-		await rm(reposDir, { recursive: true });
+
+		let totalSize = 0;
+		if (reposExist) {
+			totalSize += getDirSize(reposDir);
+		}
+		if (sessionsExist) {
+			totalSize += getDirSize(sessionsDir);
+		}
+
+		console.log(`removing all cached data (${formatSize(totalSize)})`);
+		if (reposExist) {
+			await rm(reposDir, { recursive: true });
+		}
+		if (sessionsExist) {
+			await rm(sessionsDir, { recursive: true });
+		}
 		console.log('done');
 		return;
 	}
@@ -176,23 +193,43 @@ export const handler = async (args: Args): Promise<void> => {
 
 	// list repos and prompt for confirmation
 	const repos = listCachedRepos();
-	if (repos.length === 0) {
-		console.log('no cached repositories found');
+	const sessionsExist = existsSync(sessionsDir);
+	const sessionsSize = sessionsExist ? getDirSize(sessionsDir) : 0;
+
+	if (repos.length === 0 && !sessionsExist) {
+		console.log('no cached data found');
 		return;
 	}
 
-	console.log('cached repositories:\n');
 	let totalSize = 0;
-	for (const repo of repos) {
-		console.log(`  ${repo.displayPath.padEnd(50)} ${formatSize(repo.size)}`);
-		totalSize += repo.size;
+
+	if (repos.length > 0) {
+		console.log('cached repositories:\n');
+		for (const repo of repos) {
+			console.log(`  ${repo.displayPath.padEnd(50)} ${formatSize(repo.size)}`);
+			totalSize += repo.size;
+		}
 	}
+
+	if (sessionsExist && sessionsSize > 0) {
+		if (repos.length > 0) {
+			console.log();
+		}
+		console.log(`sessions: ${formatSize(sessionsSize)}`);
+		totalSize += sessionsSize;
+	}
+
 	console.log(`\n  total: ${formatSize(totalSize)}`);
 	console.log();
 
-	const confirmed = await confirm('remove all cached repositories?');
+	const confirmed = await confirm('remove all cached data?');
 	if (confirmed) {
-		await rm(reposDir, { recursive: true });
+		if (repos.length > 0) {
+			await rm(reposDir, { recursive: true });
+		}
+		if (sessionsExist) {
+			await rm(sessionsDir, { recursive: true });
+		}
 		console.log('done');
 	}
 };
