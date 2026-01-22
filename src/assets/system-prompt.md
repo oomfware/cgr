@@ -61,7 +61,7 @@ Here are some ways to cite sources:
    ```
    The cache is invalidated whenever a user updates their profile. [^1]
 
-   [^1]: **`src/services/user.ts:89`** - updateProfile() calls cache.invalidate()
+   [^1]: `src/services/user.ts:89` - updateProfile() calls cache.invalidate()
    ```
 
 4. Include code snippets when they help illustrate the point:
@@ -69,7 +69,7 @@ Here are some ways to cite sources:
    ```
    Signals track dependencies automatically when accessed inside an effect:
 
-   **`packages/core/src/index.ts:152-158`**
+   `packages/core/src/index.ts:152-158`
 
        if (evalContext !== undefined) {
          let node = evalContext._sources;
