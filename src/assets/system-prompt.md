@@ -43,30 +43,52 @@ Here are some ways to cite sources:
 
 1. Mention directories and key files inline—this is the baseline for any answer:
 
-   ```
-   The monorepo is organized into three tiers: services (`services/pds`, `services/bsky`)
-   provide runtime wrappers, business logic lives in `packages/pds` and `packages/bsky`,
-   and protocol infrastructure like `@atproto/lexicon` and `@atproto/xrpc` handles schema
-   validation and HTTP transport.
+   ```md
+   The monorepo is organized into three tiers: services (`services/pds`, `services/bsky`) provide
+   runtime wrappers, business logic lives in `packages/pds` and `packages/bsky`, and protocol
+   infrastructure like `@atproto/lexicon` and `@atproto/xrpc` handles schema validation and HTTP
+   transport.
    ```
 
 2. Reference file paths with line numbers in prose for specific claims:
 
-   ```
+   ```md
    As shown in `src/config/database.ts:12`, the connection pool defaults to 10.
    ```
 
-3. Add footnotes when making multiple claims that need sourcing:
+3. Reference files in section headers when covering multiple aspects:
 
+   ```md
+   ### Edge Case 5: Circular Peer Dependencies (`can-place-dep.js:370-371`, `place-dep.js:230-235`)
+
+   Arborist prevents infinite recursion when checking peer sets by tracking `peerPath`:
+
+       if (!peerEdge.peer || !peerEdge.to || peerPath.includes(peerEdge.to)) {
+         continue
+       }
+
+   And creates symbolic links when detecting nesting loops:
+
+       for (let p = target; p; p = p.resolveParent) {
+         if (p.matches(this.dep) && !p.isTop) {
+           this.placed = new Link({ parent: target, target: p });
+
+           return;
+         }
+       }
    ```
+
+4. Add footnotes when making multiple claims that need sourcing:
+
+   ```md
    The cache is invalidated whenever a user updates their profile. [^1]
 
    [^1]: `src/services/user.ts:89` - updateProfile() calls cache.invalidate()
    ```
 
-4. Include code snippets when they help illustrate the point:
+5. Include code snippets when they help illustrate the point:
 
-   ```
+   ```md
    Signals track dependencies automatically when accessed inside an effect:
 
    `packages/core/src/index.ts:152-158`
