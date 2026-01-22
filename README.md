@@ -55,14 +55,16 @@ add this to your `~/.claude/CLAUDE.md` or project's `CLAUDE.md` to let Claude Co
 ```markdown
 ## cgr
 
-Use `npx @oomfware/cgr ask <repo> <question>` to research external repositories. examples:
+Use `npx @oomfware/cgr ask <repo> <question>` to ask questions about external repositories.
 
 - `npx @oomfware/cgr ask github.com/facebook/react "How do hooks track dependencies to avoid stale closures in useEffect?"`
 - `npx @oomfware/cgr ask -b canary github.com/vercel/next.js "Where is dynamic route resolution handled in the app router?"`
 - `npx @oomfware/cgr ask -m sonnet github.com/shadcn-ui/ui "How do I configure path aliases so components install to the right location?"`
 
-This clones the repo locally and runs Claude Code in read-only mode to analyze it. Run
-`npx @oomfware/cgr --help` for more options.
+cgr works best with detailed questions. Include file/folder paths when you know them, and reference
+details from previous answers in follow-ups.
+
+Run `npx @oomfware/cgr --help` for more options.
 ```
 
 alternatively, a more structured prompt:
@@ -78,7 +80,7 @@ You can use `@oomfware/cgr` to ask questions about external repositories.
       -m, --model <model>   model to use: opus, sonnet, haiku (default: haiku)
       -b, --branch <branch> branch to checkout
 
-useful repositories:
+Useful repositories:
 
 - `github.com/facebook/react` for React internals, hooks, reconciler
 - `github.com/vercel/next.js` for Next.js app router, server components
@@ -86,6 +88,8 @@ useful repositories:
 - `github.com/tailwindlabs/tailwindcss` for Tailwind internals, plugin API
 - `github.com/bluesky-social/atproto` for AT Protocol, Bluesky API
 
-This clones the repo locally and runs Claude Code in read-only mode. Run `npx @oomfware/cgr --help`
-for more options.
+cgr works best with detailed questions. Include file/folder paths when you know them, and reference
+details from previous answers in follow-ups.
+
+Run `npx @oomfware/cgr --help` for more options.
 ```
