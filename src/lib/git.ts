@@ -3,22 +3,28 @@ import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+import { debug, debugEnabled } from './debug.ts';
+
 /**
  * executes a git command silently, only showing output on failure.
+ * when debug is enabled, inherits stdio to show git progress.
  * @param args git command arguments
  * @param cwd working directory
  * @returns promise that resolves when the command completes
  */
 const git = (args: string[], cwd?: string): Promise<void> =>
 	new Promise((resolve, reject) => {
+		debug(`git ${args.join(' ')}${cwd ? ` (in ${cwd})` : ''}`);
 		const proc = spawn('git', args, {
 			cwd,
-			stdio: ['inherit', 'pipe', 'pipe'],
+			stdio: debugEnabled ? 'inherit' : ['inherit', 'pipe', 'pipe'],
 		});
 		let stderr = '';
-		proc.stderr!.on('data', (data: Buffer) => {
-			stderr += data.toString();
-		});
+		if (!debugEnabled) {
+			proc.stderr!.on('data', (data: Buffer) => {
+				stderr += data.toString();
+			});
+		}
 		proc.on('close', (code) => {
 			if (code === 0) {
 				resolve();
@@ -34,24 +40,28 @@ const git = (args: string[], cwd?: string): Promise<void> =>
 
 /**
  * executes a git command and captures stdout, only showing stderr on failure.
+ * when debug is enabled, inherits stderr to show git progress.
  * @param args git command arguments
  * @param cwd working directory
  * @returns promise that resolves with stdout
  */
 const gitOutput = (args: string[], cwd?: string): Promise<string> =>
 	new Promise((resolve, reject) => {
+		debug(`git ${args.join(' ')}${cwd ? ` (in ${cwd})` : ''}`);
 		const proc = spawn('git', args, {
 			cwd,
-			stdio: ['inherit', 'pipe', 'pipe'],
+			stdio: ['inherit', 'pipe', debugEnabled ? 'inherit' : 'pipe'],
 		});
 		let output = '';
 		let stderr = '';
 		proc.stdout!.on('data', (data: Buffer) => {
 			output += data.toString();
 		});
-		proc.stderr!.on('data', (data: Buffer) => {
-			stderr += data.toString();
-		});
+		if (!debugEnabled) {
+			proc.stderr!.on('data', (data: Buffer) => {
+				stderr += data.toString();
+			});
+		}
 		proc.on('close', (code) => {
 			if (code === 0) {
 				resolve(output.trim());
