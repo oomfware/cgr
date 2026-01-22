@@ -21,6 +21,12 @@ export const schema = object({
 
 export type Args = InferValue<typeof schema>;
 
+type Choice = {
+	name: string;
+	value: string;
+	short: string;
+};
+
 /**
  * checks if a path exists.
  * @param path the path to check
@@ -209,21 +215,29 @@ export const handler = async (args: Args): Promise<void> => {
 	}
 
 	// build choices for checkbox
-	const choices: { name: string; value: string }[] = repos.map((repo) => ({
-		name: `${repo.displayPath.padEnd(50)} ${formatSize(repo.size)}`,
+	const maxNameLen = Math.max(
+		...repos.map((r) => r.displayPath.length),
+		sessionsExist ? '(sessions)'.length : 0,
+	);
+
+	const choices: Choice[] = repos.map((repo) => ({
+		name: `${repo.displayPath.padEnd(maxNameLen)}  ${formatSize(repo.size)}`,
 		value: repo.path,
+		short: repo.displayPath,
 	}));
 
 	if (sessionsExist && sessionsSize > 0) {
 		choices.push({
-			name: `${'(sessions)'.padEnd(50)} ${formatSize(sessionsSize)}`,
+			name: `${'(sessions)'.padEnd(maxNameLen)}  ${formatSize(sessionsSize)}`,
 			value: sessionsDir,
+			short: '(sessions)',
 		});
 	}
 
 	const selected = await checkbox({
 		message: 'select items to remove',
 		choices,
+		pageSize: 20,
 	});
 
 	if (selected.length === 0) {
