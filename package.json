@@ -1,6 +1,6 @@
 {
 	"name": "@oomfware/cgr",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "ask questions about git repositories using Claude Code",
 	"license": "0BSD",
 	"repository": {
