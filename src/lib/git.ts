@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 /**
- * executes a git command and returns the result.
+ * executes a git command silently, only showing output on failure.
  * @param args git command arguments
  * @param cwd working directory
  * @returns promise that resolves when the command completes
@@ -13,12 +13,19 @@ const git = (args: string[], cwd?: string): Promise<void> =>
 	new Promise((resolve, reject) => {
 		const proc = spawn('git', args, {
 			cwd,
-			stdio: 'inherit',
+			stdio: ['inherit', 'pipe', 'pipe'],
+		});
+		let stderr = '';
+		proc.stderr!.on('data', (data: Buffer) => {
+			stderr += data.toString();
 		});
 		proc.on('close', (code) => {
 			if (code === 0) {
 				resolve();
 			} else {
+				if (stderr) {
+					process.stderr.write(stderr);
+				}
 				reject(new Error(`git ${args[0]} failed with code ${code}`));
 			}
 		});
@@ -26,7 +33,7 @@ const git = (args: string[], cwd?: string): Promise<void> =>
 	});
 
 /**
- * executes a git command and captures stdout.
+ * executes a git command and captures stdout, only showing stderr on failure.
  * @param args git command arguments
  * @param cwd working directory
  * @returns promise that resolves with stdout
@@ -35,16 +42,23 @@ const gitOutput = (args: string[], cwd?: string): Promise<string> =>
 	new Promise((resolve, reject) => {
 		const proc = spawn('git', args, {
 			cwd,
-			stdio: ['inherit', 'pipe', 'inherit'],
+			stdio: ['inherit', 'pipe', 'pipe'],
 		});
 		let output = '';
+		let stderr = '';
 		proc.stdout!.on('data', (data: Buffer) => {
 			output += data.toString();
+		});
+		proc.stderr!.on('data', (data: Buffer) => {
+			stderr += data.toString();
 		});
 		proc.on('close', (code) => {
 			if (code === 0) {
 				resolve(output.trim());
 			} else {
+				if (stderr) {
+					process.stderr.write(stderr);
+				}
 				reject(new Error(`git ${args[0]} failed with code ${code}`));
 			}
 		});
