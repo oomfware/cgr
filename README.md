@@ -16,7 +16,10 @@ cgr ask github.com/facebook/react "How do hooks track dependencies to avoid stal
 cgr ask -m sonnet github.com/shadcn-ui/ui "How does the registry system resolve component dependencies?"
 
 # checkout a specific branch
-cgr ask -b canary github.com/vercel/next.js "Where is dynamic route resolution handled in the app router?"
+cgr ask github.com/vercel/next.js#canary "Where is dynamic route resolution handled in the app router?"
+
+# ask about multiple repositories at once
+cgr ask github.com/facebook/react -w github.com/vercel/next.js "How does Next.js integrate with React's server components?"
 
 # works with any git host
 cgr ask tangled.sh/mary.my.id/atcute "How do I validate AT Protocol lexicon schemas at runtime?"
@@ -39,7 +42,7 @@ cgr clean --all
 ## commands
 
 ```
-cgr ask [-m opus|sonnet|haiku] [-b branch] <repo> <question>
+cgr ask [-m opus|sonnet|haiku] [-w repo#branch ...] <repo#branch> <question>
 cgr clean [--all | <repo>]
 ```
 
@@ -58,8 +61,9 @@ add this to your `~/.claude/CLAUDE.md` or project's `CLAUDE.md` to let Claude Co
 Use `npx @oomfware/cgr ask <repo> <question>` to ask questions about external repositories.
 
 - `npx @oomfware/cgr ask github.com/facebook/react "How do hooks track dependencies to avoid stale closures in useEffect?"`
-- `npx @oomfware/cgr ask -b canary github.com/vercel/next.js "Where is dynamic route resolution handled in the app router?"`
+- `npx @oomfware/cgr ask github.com/vercel/next.js#canary "Where is dynamic route resolution handled in the app router?"`
 - `npx @oomfware/cgr ask -m sonnet github.com/shadcn-ui/ui "How do I configure path aliases so components install to the right location?"`
+- `npx @oomfware/cgr ask github.com/facebook/react -w github.com/vercel/next.js "How does Next.js integrate with React's server components?"`
 
 cgr works best with detailed questions. Include file/folder paths when you know them, and reference
 details from previous answers in follow-ups.
@@ -74,11 +78,11 @@ alternatively, a more structured prompt:
 
 You can use `@oomfware/cgr` to ask questions about external repositories.
 
-    npx @oomfware/cgr ask [options] <repo> <question>
+    npx @oomfware/cgr ask [options] <repo#branch> <question>
 
     options:
-      -m, --model <model>   model to use: opus, sonnet, haiku (default: haiku)
-      -b, --branch <branch> branch to checkout
+      -m, --model <model>  model to use: opus, sonnet, haiku (default: haiku)
+      -w, --with <repo>    additional repository to include (can be repeated)
 
 Useful repositories:
 
