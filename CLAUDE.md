@@ -67,3 +67,21 @@ the source code is organized under `src/`:
   be sure
 - Task tool (subagents for exploration, planning, etc.) may not always be accurate; verify subagent
   findings when needed
+
+### using cgr for external context
+
+use the local build to ask questions about dependencies and related projects:
+
+    mise exec -- node ./dist/index.mjs ask [options] <repo>[#branch] <question>
+
+    options:
+      -m, --model <model>   model to use: opus, sonnet, haiku (default: haiku)
+      -w, --with <repo>     additional repository to include, supports #branch (repeatable)
+
+useful repositories for cgr development:
+
+- `github.com/dahlia/optique` for CLI framework internals, argument parsing, command composition
+- `github.com/rolldown/tsdown` for build tooling, bundler configuration
+
+cgr works best with detailed questions. include file/folder paths when you know them, and reference
+details from previous answers in follow-ups.
