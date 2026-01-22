@@ -219,16 +219,29 @@ export const handler = async (args: Args): Promise<void> => {
 		...repos.map((r) => r.displayPath.length),
 		sessionsExist ? '(sessions)'.length : 0,
 	);
+	const maxSizeLen = Math.max(
+		...repos.map((r) => formatSize(r.size).length),
+		sessionsExist ? formatSize(sessionsSize).length : 0,
+	);
+
+	// checkbox prefix is ~4 chars, leave some margin
+	const termWidth = process.stdout.columns ?? 80;
+	const usePadding = maxNameLen + 2 + maxSizeLen + 6 <= termWidth;
+
+	const formatChoice = (name: string, size: number): string =>
+		usePadding
+			? `${name.padEnd(maxNameLen)}  ${formatSize(size)}`
+			: `${name} (${formatSize(size)})`;
 
 	const choices: Choice[] = repos.map((repo) => ({
-		name: `${repo.displayPath.padEnd(maxNameLen)}  ${formatSize(repo.size)}`,
+		name: formatChoice(repo.displayPath, repo.size),
 		value: repo.path,
 		short: repo.displayPath,
 	}));
 
 	if (sessionsExist && sessionsSize > 0) {
 		choices.push({
-			name: `${'(sessions)'.padEnd(maxNameLen)}  ${formatSize(sessionsSize)}`,
+			name: formatChoice('(sessions)', sessionsSize),
 			value: sessionsDir,
 			short: '(sessions)',
 		});
