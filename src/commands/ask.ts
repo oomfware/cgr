@@ -133,7 +133,7 @@ const spawnClaude = (cwd: string, contextPrompt: string, args: Args): Promise<nu
 			contextPrompt,
 		];
 
-		console.error('spawning claude...');
+		console.error('summoning claude...');
 		const claude = spawn('claude', claudeArgs, {
 			cwd,
 			stdio: 'inherit',
