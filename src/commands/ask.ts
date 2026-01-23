@@ -18,6 +18,7 @@ import { ensureRepo } from '../lib/git.ts';
 import {
 	cleanupSessionDir,
 	createSessionDir,
+	gcSessions,
 	getRepoCachePath,
 	normalizeRemote,
 	parseRemote,
@@ -168,6 +169,9 @@ const spawnClaude = (cwd: string, contextPrompt: string, args: Args): Promise<nu
  * @param args parsed command arguments
  */
 export const handler = async (args: Args): Promise<void> => {
+	// fire-and-forget cleanup of orphaned sessions
+	gcSessions();
+
 	// parse main remote (with optional #branch)
 	const mainRepo = parseRepoInput(args.remote);
 

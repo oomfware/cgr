@@ -206,23 +206,15 @@ export const handler = async (args: Args): Promise<void> => {
 
 	// #region interactive selection
 	const repos = await listCachedRepos();
-	const sessionsExist = await exists(sessionsDir);
-	const sessionsSize = sessionsExist ? await getDirSize(sessionsDir) : 0;
 
-	if (repos.length === 0 && !sessionsExist) {
-		console.log('no cached data found');
+	if (repos.length === 0) {
+		console.log('no cached repositories found');
 		return;
 	}
 
 	// build choices for checkbox
-	const maxNameLen = Math.max(
-		...repos.map((r) => r.displayPath.length),
-		sessionsExist ? '(sessions)'.length : 0,
-	);
-	const maxSizeLen = Math.max(
-		...repos.map((r) => formatSize(r.size).length),
-		sessionsExist ? formatSize(sessionsSize).length : 0,
-	);
+	const maxNameLen = Math.max(...repos.map((r) => r.displayPath.length));
+	const maxSizeLen = Math.max(...repos.map((r) => formatSize(r.size).length));
 
 	// checkbox prefix is ~4 chars, leave some margin
 	const termWidth = process.stdout.columns ?? 80;
@@ -236,14 +228,6 @@ export const handler = async (args: Args): Promise<void> => {
 		value: repo.path,
 		short: repo.displayPath,
 	}));
-
-	if (sessionsExist && sessionsSize > 0) {
-		choices.push({
-			name: formatChoice('(sessions)', sessionsSize),
-			value: sessionsDir,
-			short: '(sessions)',
-		});
-	}
 
 	const selected = await checkbox({
 		message: 'select items to remove',

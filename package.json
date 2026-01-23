@@ -32,7 +32,8 @@
 		"@inquirer/checkbox": "5.0.4",
 		"@inquirer/confirm": "6.0.4",
 		"@optique/core": "^0.9.1",
-		"@optique/run": "^0.9.1"
+		"@optique/run": "^0.9.1",
+		"valibot": "^1.2.0"
 	},
 	"devDependencies": {
 		"@types/node": "^25.0.10",
