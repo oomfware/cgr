@@ -3,6 +3,8 @@
 import { command, message, or } from '@optique/core';
 import { run } from '@optique/run';
 
+import manifest from '../package.json' with { type: 'json' };
+
 import * as ask from './commands/ask.ts';
 import * as clean from './commands/clean.ts';
 
@@ -18,7 +20,7 @@ const parser = or(
 const result = run(parser, {
 	programName: 'cgr',
 	help: 'both',
-	version: { value: '0.1.0', mode: 'option' },
+	version: { value: manifest.version, mode: 'both' },
 	brief: message`ask questions about git repositories using Claude Code`,
 });
 
