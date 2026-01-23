@@ -86,14 +86,33 @@ const gitOutput = (args: string[], cwd?: string): Promise<string> =>
 	});
 
 /**
+ * checks if a repository is a shallow clone.
+ * @param cachePath the local repository path
+ * @returns true if the repository is shallow
+ */
+export const isShallowRepo = async (cachePath: string): Promise<boolean> => {
+	const result = await gitOutput(['rev-parse', '--is-shallow-repository'], cachePath);
+	return result === 'true';
+};
+
+/**
  * clones a repository to the cache path.
  * @param remote the remote URL
  * @param cachePath the local cache path
  * @param branch optional branch to checkout
+ * @param shallow if true, performs a shallow clone with depth 1
  */
-export const cloneRepo = async (remote: string, cachePath: string, branch?: string): Promise<void> => {
+export const cloneRepo = async (
+	remote: string,
+	cachePath: string,
+	branch?: string,
+	shallow?: boolean,
+): Promise<void> => {
 	await mkdir(dirname(cachePath), { recursive: true });
 	const args = ['clone'];
+	if (shallow) {
+		args.push('--depth', '1');
+	}
 	if (branch) {
 		args.push('--branch', branch);
 	}
@@ -106,9 +125,27 @@ export const cloneRepo = async (remote: string, cachePath: string, branch?: stri
  * discards any local modifications, staged changes, and untracked files.
  * @param cachePath the local cache path
  * @param branch optional branch to checkout (uses default branch if not specified)
+ * @param shallow if true, keeps shallow clone; if false, unshallows if needed
  */
-export const updateRepo = async (cachePath: string, branch?: string): Promise<void> => {
-	await git(['fetch', 'origin'], cachePath);
+export const updateRepo = async (cachePath: string, branch?: string, shallow?: boolean): Promise<void> => {
+	const currentlyShallow = await isShallowRepo(cachePath);
+
+	// handle shallow state transitions
+	if (!shallow && currentlyShallow) {
+		// want full history but have shallow - unshallow first
+		await git(['fetch', '--unshallow', 'origin'], cachePath);
+	} else if (shallow && !currentlyShallow) {
+		// want shallow but have full - just use the full clone as-is
+		console.error('  note: repository is already a full clone, use `cgr clean` to re-clone as shallow');
+	}
+
+	// fetch updates (use depth for shallow repos that stay shallow)
+	if (shallow && currentlyShallow) {
+		await git(['fetch', '--depth', '1', 'origin'], cachePath);
+	} else if (!currentlyShallow || !shallow) {
+		// either was unshallowed above, or is/was full
+		await git(['fetch', 'origin'], cachePath);
+	}
 
 	// determine the branch to use
 	let targetBranch = branch;
@@ -125,16 +162,26 @@ export const updateRepo = async (cachePath: string, branch?: string): Promise<vo
 	await git(['reset', '--hard', `origin/${targetBranch}`], cachePath);
 };
 
+export interface EnsureRepoOptions {
+	/** the remote URL */
+	remote: string;
+	/** the local cache path */
+	cachePath: string;
+	/** branch to checkout */
+	branch: string | undefined;
+	/** if true, uses shallow clone with depth 1 */
+	shallow: boolean;
+}
+
 /**
  * ensures a repository is cloned and up-to-date.
- * @param remote the remote URL
- * @param cachePath the local cache path
- * @param branch optional branch to checkout
+ * @param options repository options
  */
-export const ensureRepo = async (remote: string, cachePath: string, branch?: string): Promise<void> => {
+export const ensureRepo = async (options: EnsureRepoOptions): Promise<void> => {
+	const { remote, cachePath, branch, shallow } = options;
 	if (existsSync(cachePath)) {
-		await updateRepo(cachePath, branch);
+		await updateRepo(cachePath, branch, shallow);
 	} else {
-		await cloneRepo(remote, cachePath, branch);
+		await cloneRepo(remote, cachePath, branch, shallow);
 	}
 };

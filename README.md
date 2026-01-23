@@ -42,9 +42,15 @@ cgr clean --all
 ## commands
 
 ```
-cgr ask [-m opus|sonnet|haiku] [-w repo[#branch] ...] <repo>[#branch] <question>
+cgr ask [-m opus|sonnet|haiku] [-s] [-w repo[#branch] ...] <repo>[#branch] <question>
 cgr clean [--all | <repo>]
 ```
+
+| option          | description                                       |
+| --------------- | ------------------------------------------------- |
+| `-m, --model`   | model to use: opus, sonnet, haiku (default haiku) |
+| `-s, --shallow` | use shallow clone (depth 1) for faster cloning    |
+| `-w, --with`    | additional repository to include (repeatable)     |
 
 | command | description                                                       |
 | ------- | ----------------------------------------------------------------- |
@@ -82,6 +88,7 @@ You can use `@oomfware/cgr` to ask questions about external repositories.
 
     options:
       -m, --model <model>   model to use: opus, sonnet, haiku (default: haiku)
+      -s, --shallow         use shallow clone (depth 1) for faster cloning
       -w, --with <repo>     additional repository to include, supports #branch (repeatable)
 
 Useful repositories:

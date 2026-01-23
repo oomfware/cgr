@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 
-import { argument, choice, constant, type InferValue, message, object, option, string } from '@optique/core';
+import { argument, choice, constant, flag, type InferValue, message, object, option, string } from '@optique/core';
 import { multiple, optional, withDefault } from '@optique/core/modifiers';
 
 import { ensureRepo } from '../lib/git.ts';
@@ -28,6 +28,9 @@ export const schema = object({
 		}),
 		'haiku',
 	),
+	shallow: flag('-s', '--shallow', {
+		description: message`use shallow clone (depth 1) to save time and disk space`,
+	}),
 	// TODO: deprecated in favor of #branch syntax, remove in future version
 	branch: optional(
 		option('-b', '--branch', string(), {
@@ -168,7 +171,12 @@ export const handler = async (args: Args): Promise<void> => {
 		const remoteUrl = normalizeRemote(mainRepo.remote);
 		console.error(`preparing repository: ${mainRepo.parsed.host}/${mainRepo.parsed.path}`);
 		try {
-			await ensureRepo(remoteUrl, mainRepo.cachePath, mainRepo.branch);
+			await ensureRepo({
+				remote: remoteUrl,
+				cachePath: mainRepo.cachePath,
+				branch: mainRepo.branch,
+				shallow: args.shallow,
+			});
 		} catch (err) {
 			console.error(`error: failed to prepare repository: ${err}`);
 			process.exit(1);
@@ -192,7 +200,12 @@ export const handler = async (args: Args): Promise<void> => {
 			const remoteUrl = normalizeRemote(repo.remote);
 			const display = `${repo.parsed.host}/${repo.parsed.path}`;
 			console.error(`  preparing: ${display}`);
-			await ensureRepo(remoteUrl, repo.cachePath, repo.branch);
+			await ensureRepo({
+				remote: remoteUrl,
+				cachePath: repo.cachePath,
+				branch: repo.branch,
+				shallow: args.shallow,
+			});
 			return repo;
 		}),
 	);
