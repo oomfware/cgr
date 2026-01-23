@@ -41,7 +41,7 @@ citations only for general programming concepts unrelated to the codebase.
 
 Here are some ways to cite sources:
 
-1. Mention directories and key files inline—this is the baseline for any answer:
+1. Mention directories and key files inline, this is the baseline for any answer:
 
    ```md
    The monorepo is organized into three tiers: services (`services/pds`, `services/bsky`) provide
@@ -78,7 +78,7 @@ Here are some ways to cite sources:
        }
    ```
 
-4. Add footnotes when making multiple claims that need sourcing:
+4. Use footnotes when you have many citations to keep the prose flowing:
 
    ```md
    The cache is invalidated whenever a user updates their profile. [^1]
