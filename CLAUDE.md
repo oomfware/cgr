@@ -43,6 +43,14 @@ the source code is organized under `src/`:
   - use `@returns` for return values
   - use `@throws` for exceptions when applicable
   - keep descriptions concise but informative
+- optional parameters should only exist when callers actually vary in what they pass:
+  - if all callers use the default, hardcode it instead of making it a parameter
+  - if all callers must pass a value (e.g. forwarding), make it required
+  - good optional parameters: config values with sensible defaults that some callers override (e.g.,
+    `timeout = 5000` where most use the default but some need custom values)
+- avoid optional parameters that change behavioral modes; prefer separate functions instead
+- when adding optional parameters for backwards compatibility, consider whether a new function with
+  a clearer name would be better
 
 ### testing
 
