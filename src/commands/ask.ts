@@ -39,9 +39,12 @@ export const schema = object({
 		}),
 		'haiku',
 	),
-	deep: flag('-d', '--deep', {
-		description: message`clone full history (enables git log/blame/show)`,
-	}),
+	deep: withDefault(
+		flag('-d', '--deep', {
+			description: message`clone full history (enables git log/blame/show)`,
+		}),
+		false,
+	),
 	with: withDefault(
 		multiple(
 			option('-w', '--with', string(), {
