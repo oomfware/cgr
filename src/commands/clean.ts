@@ -229,9 +229,7 @@ export const handler = async (args: Args): Promise<void> => {
 	const usePadding = maxNameLen + 2 + maxSizeLen + 6 <= termWidth;
 
 	const formatChoice = (name: string, size: number): string =>
-		usePadding
-			? `${name.padEnd(maxNameLen)}  ${formatSize(size)}`
-			: `${name} (${formatSize(size)})`;
+		usePadding ? `${name.padEnd(maxNameLen)}  ${formatSize(size)}` : `${name} (${formatSize(size)})`;
 
 	const choices: Choice[] = repos.map((repo) => ({
 		name: formatChoice(repo.displayPath, repo.size),
