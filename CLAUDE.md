@@ -84,6 +84,7 @@ use the local build to ask questions about dependencies and related projects:
 
     options:
       -m, --model <model>   model to use: opus, sonnet, haiku (default: haiku)
+      -d, --deep            clone full history (enables git log/blame/show)
       -w, --with <repo>     additional repository to include, supports #branch (repeatable)
 
 useful repositories for cgr development:

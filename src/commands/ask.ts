@@ -1,8 +1,18 @@
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 
-import { argument, choice, constant, flag, type InferValue, message, object, option, string } from '@optique/core';
-import { multiple, optional, withDefault } from '@optique/core/modifiers';
+import {
+	argument,
+	choice,
+	constant,
+	flag,
+	type InferValue,
+	message,
+	object,
+	option,
+	string,
+} from '@optique/core';
+import { multiple, withDefault } from '@optique/core/modifiers';
 
 import { ensureRepo } from '../lib/git.ts';
 import {
@@ -28,15 +38,9 @@ export const schema = object({
 		}),
 		'haiku',
 	),
-	shallow: flag('-s', '--shallow', {
-		description: message`use shallow clone (depth 1) to save time and disk space`,
+	deep: flag('-d', '--deep', {
+		description: message`clone full history (enables git log/blame/show)`,
 	}),
-	// TODO: deprecated in favor of #branch syntax, remove in future version
-	branch: optional(
-		option('-b', '--branch', string(), {
-			description: message`branch to checkout (deprecated: use repo#branch instead)`,
-		}),
-	),
 	with: withDefault(
 		multiple(
 			option('-w', '--with', string(), {
@@ -46,7 +50,7 @@ export const schema = object({
 		[],
 	),
 	remote: argument(string({ metavar: 'REPO' }), {
-		description: message`git remote URL (HTTP/HTTPS/SSH), optionally with #branch`,
+		description: message`git remote URL (http/https/ssh), optionally with #branch`,
 	}),
 	question: argument(string({ metavar: 'QUESTION' }), {
 		description: message`question to ask about the repository`,
@@ -91,26 +95,33 @@ const parseRepoInput = (input: string): RepoEntry => {
 /**
  * builds a context prompt for a single repository.
  * @param repo the repo entry
+ * @param deep whether the clone has full history
  * @returns context prompt string
  */
-const buildSingleRepoContext = (repo: RepoEntry): string => {
+const buildSingleRepoContext = (repo: RepoEntry, deep: boolean): string => {
 	const repoDisplay = `${repo.parsed.host}/${repo.parsed.path}`;
 	const branchDisplay = repo.branch ?? 'default branch';
-	return `You are examining ${repoDisplay} (checked out on ${branchDisplay}).`;
+	const cloneType = deep ? 'full clone' : 'shallow clone';
+
+	return `You are examining ${repoDisplay} (checked out on ${branchDisplay}, ${cloneType}).`;
 };
 
 /**
  * builds a context prompt for multiple repositories.
  * @param dirMap map of directory name -> repo entry
+ * @param deep whether the clones have full history
  * @returns context prompt string
  */
-const buildMultiRepoContext = (dirMap: Map<string, RepoEntry>): string => {
-	const lines = ['You are examining multiple repositories:', ''];
+const buildMultiRepoContext = (dirMap: Map<string, RepoEntry>, deep: boolean): string => {
+	const cloneType = deep ? 'full clone' : 'shallow clone';
+	const lines = [`You are examining multiple repositories (${cloneType}):`, ''];
+
 	for (const [dirName, repo] of dirMap) {
 		const repoDisplay = `${repo.parsed.host}/${repo.parsed.path}`;
 		const branchDisplay = repo.branch ?? 'default branch';
 		lines.push(`- ${dirName}/ -> ${repoDisplay} (checked out on ${branchDisplay})`);
 	}
+
 	return lines.join('\n');
 };
 
@@ -147,7 +158,7 @@ const spawnClaude = (cwd: string, contextPrompt: string, args: Args): Promise<nu
 		});
 
 		claude.on('error', (err) => {
-			reject(new Error(`failed to spawn claude: ${err}`));
+			reject(new Error(`failed to summon claude: ${err}`));
 		});
 	});
 
@@ -160,11 +171,6 @@ export const handler = async (args: Args): Promise<void> => {
 	// parse main remote (with optional #branch)
 	const mainRepo = parseRepoInput(args.remote);
 
-	// #branch takes precedence over -b flag
-	if (!mainRepo.branch && args.branch) {
-		mainRepo.branch = args.branch;
-	}
-
 	// #region single repo mode
 	if (args.with.length === 0) {
 		// clone or update repository
@@ -175,14 +181,14 @@ export const handler = async (args: Args): Promise<void> => {
 				remote: remoteUrl,
 				cachePath: mainRepo.cachePath,
 				branch: mainRepo.branch,
-				shallow: args.shallow,
+				deep: args.deep,
 			});
 		} catch (err) {
 			console.error(`error: failed to prepare repository: ${err}`);
 			process.exit(1);
 		}
 
-		const contextPrompt = buildSingleRepoContext(mainRepo);
+		const contextPrompt = buildSingleRepoContext(mainRepo, args.deep);
 		const exitCode = await spawnClaude(mainRepo.cachePath, contextPrompt, args);
 		process.exit(exitCode);
 	}
@@ -204,7 +210,7 @@ export const handler = async (args: Args): Promise<void> => {
 				remote: remoteUrl,
 				cachePath: repo.cachePath,
 				branch: repo.branch,
-				shallow: args.shallow,
+				deep: args.deep,
 			});
 			return repo;
 		}),
@@ -235,7 +241,7 @@ export const handler = async (args: Args): Promise<void> => {
 
 	try {
 		const dirMap = await buildSymlinkDir(sessionPath, allRepos);
-		const contextPrompt = buildMultiRepoContext(dirMap);
+		const contextPrompt = buildMultiRepoContext(dirMap, args.deep);
 		exitCode = await spawnClaude(sessionPath, contextPrompt, args);
 	} finally {
 		// always clean up session directory

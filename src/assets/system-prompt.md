@@ -111,6 +111,10 @@ where they can look—so they can ask informed follow-ups.
 **Compare implementations**: When examining multiple repositories, highlight differences in
 approach. Tables work well for summarizing tradeoffs.
 
-**Use history**: When relevant, use git log/blame/show to understand how code evolved.
+**Use history**: When relevant, use git log/blame/show to understand how code evolved—why code
+exists, when behavior changed, who authored a component. If the repository is a shallow clone and
+the question would benefit from git history, suggest re-running with `--deep`.
 
 **Admit uncertainty**: If you're unsure about something, say so and explain what you did find.
+
+---
