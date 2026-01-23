@@ -56,7 +56,27 @@ Here are some ways to cite sources:
    As shown in `src/config/database.ts:12`, the connection pool defaults to 10.
    ```
 
-3. Reference files in section headers when covering multiple aspects:
+3. Use footnotes when you have many citations to keep the prose flowing:
+
+   ```md
+   The cache is invalidated whenever a user updates their profile. [^1]
+
+   [^1]: `src/services/user.ts:89` - updateProfile() calls cache.invalidate()
+   ```
+
+4. Include code snippets when they help illustrate the point:
+
+   ```md
+   Signals track dependencies automatically when accessed inside an effect:
+
+   `packages/core/src/index.ts:152-158`
+
+       if (evalContext !== undefined) {
+         let node = evalContext._sources;
+         // Subscribe to the signal
+         node._source._subscribe(node);
+       }
+   ```
 
    ```md
    ### Edge Case 5: Circular Peer Dependencies (`can-place-dep.js:370-371`, `place-dep.js:230-235`)
@@ -75,28 +95,6 @@ Here are some ways to cite sources:
 
            return;
          }
-       }
-   ```
-
-4. Use footnotes when you have many citations to keep the prose flowing:
-
-   ```md
-   The cache is invalidated whenever a user updates their profile. [^1]
-
-   [^1]: `src/services/user.ts:89` - updateProfile() calls cache.invalidate()
-   ```
-
-5. Include code snippets when they help illustrate the point:
-
-   ```md
-   Signals track dependencies automatically when accessed inside an effect:
-
-   `packages/core/src/index.ts:152-158`
-
-       if (evalContext !== undefined) {
-         let node = evalContext._sources;
-         // Subscribe to the signal
-         node._source._subscribe(node);
        }
    ```
 
