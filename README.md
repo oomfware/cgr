@@ -84,7 +84,7 @@ alternatively, a more structured prompt:
 
 You can use `@oomfware/cgr` to ask questions about external repositories.
 
-    npx @oomfware/cgr ask [options] <repo>[#branch] <question>
+    npx @oomfware/cgr ask [options] <repo host>/<repo owner>/<repo name>[#branch] <question>
 
     options:
       -m, --model <model>   model to use: opus, sonnet, haiku (default: haiku)
