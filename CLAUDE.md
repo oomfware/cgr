@@ -71,10 +71,8 @@ the source code is organized under `src/`:
 
 ### Claude Code-specific
 
-- Bash tool persists directory changes (`cd`) across calls; always specify cd with absolute paths to
-  be sure
-- Task tool (subagents for exploration, planning, etc.) may not always be accurate; verify subagent
-  findings when needed
+- Explore tool (subagents for exploration, planning, etc.) may not always be accurate; verify
+  subagent findings when needed
 
 ### using cgr for external context
 
