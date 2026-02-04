@@ -64,7 +64,9 @@ add this to your `~/.claude/CLAUDE.md` or project's `CLAUDE.md` to let Claude Co
 ```markdown
 ## cgr
 
-Use `npx @oomfware/cgr ask <repo> <question>` to ask questions about external repositories.
+Use `npx @oomfware/cgr ask <repo> <question>` to ask questions about external repositories. If
+you're uncertain about how a library works, how to integrate with an API, or what patterns a
+codebase uses, feel free to ask.
 
 - `npx @oomfware/cgr ask github.com/facebook/react "How do hooks track dependencies to avoid stale closures in useEffect?"`
 - `npx @oomfware/cgr ask github.com/vercel/next.js#canary "Where is dynamic route resolution handled in the app router?"`
@@ -82,7 +84,8 @@ alternatively, a more structured prompt:
 ```markdown
 # cgr
 
-You can use `@oomfware/cgr` to ask questions about external repositories.
+If you're uncertain about how a library works, how to integrate with an API, or what patterns a
+codebase uses, use `@oomfware/cgr` to ask a question with an external Git repository.
 
     npx @oomfware/cgr ask [options] <repo host>/<repo owner>/<repo name>[#branch] <question>
 
