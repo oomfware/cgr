@@ -141,6 +141,7 @@ const spawnClaude = (cwd: string, contextPrompt: string, args: Args): Promise<nu
 		const claudeArgs = [
 			'-p',
 			args.question,
+			'--no-session-persistence',
 			'--model',
 			args.model,
 			'--settings',
