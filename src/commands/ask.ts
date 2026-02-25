@@ -97,27 +97,21 @@ const parseRepoInput = (input: string): RepoEntry => {
 };
 
 /**
- * builds a context prompt for a single repository.
- * @param repo the repo entry
- * @param deep whether the clone has full history
- * @returns context prompt string
- */
-const buildSingleRepoContext = (repo: RepoEntry, deep: boolean): string => {
-	const repoDisplay = `${repo.parsed.host}/${repo.parsed.path}`;
-	const branchDisplay = repo.branch ?? 'default branch';
-	const cloneType = deep ? 'full clone' : 'shallow clone';
-
-	return `You are examining ${repoDisplay} (checked out on ${branchDisplay}, ${cloneType}).`;
-};
-
-/**
- * builds a context prompt for multiple repositories.
+ * builds a context prompt describing the repository layout.
  * @param dirMap map of directory name -> repo entry
  * @param deep whether the clones have full history
  * @returns context prompt string
  */
-const buildMultiRepoContext = (dirMap: Map<string, RepoEntry>, deep: boolean): string => {
+const buildRepoContext = (dirMap: Map<string, RepoEntry>, deep: boolean): string => {
 	const cloneType = deep ? 'full clone' : 'shallow clone';
+
+	if (dirMap.size === 1) {
+		const [dirName, repo] = dirMap.entries().next().value!;
+		const repoDisplay = `${repo.parsed.host}/${repo.parsed.path}`;
+		const branchDisplay = repo.branch ?? 'default branch';
+		return `You are examining ${repoDisplay} in ${dirName}/ (checked out on ${branchDisplay}, ${cloneType}).`;
+	}
+
 	const lines = [`You are examining multiple repositories (${cloneType}):`, ''];
 
 	for (const [dirName, repo] of dirMap) {
@@ -169,41 +163,15 @@ const spawnClaude = (cwd: string, contextPrompt: string, args: Args): Promise<nu
 
 /**
  * handles the ask command.
- * clones/updates the repository and spawns Claude Code to answer the question.
+ * clones/updates repositories and spawns Claude Code in a scratch directory.
  * @param args parsed command arguments
  */
 export const handler = async (args: Args): Promise<void> => {
 	// fire-and-forget cleanup of orphaned sessions
 	gcSessions();
 
-	// parse main remote (with optional #branch)
+	// parse all remotes
 	const mainRepo = parseRepoInput(args.remote);
-
-	// #region single repo mode
-	if (args.with.length === 0) {
-		// clone or update repository
-		const remoteUrl = normalizeRemote(mainRepo.remote);
-		console.error(`preparing repository: ${mainRepo.parsed.host}/${mainRepo.parsed.path}`);
-		try {
-			await ensureRepo({
-				remote: remoteUrl,
-				cachePath: mainRepo.cachePath,
-				branch: mainRepo.branch,
-				deep: args.deep,
-			});
-		} catch (err) {
-			console.error(`error: failed to prepare repository: ${err}`);
-			process.exit(1);
-		}
-
-		const contextPrompt = buildSingleRepoContext(mainRepo, args.deep);
-		const exitCode = await spawnClaude(mainRepo.cachePath, contextPrompt, args);
-		process.exit(exitCode);
-	}
-	// #endregion
-
-	// #region multi repo mode
-	// parse all -w remotes
 	const additionalRepos = args.with.map(parseRepoInput);
 	const allRepos = [mainRepo, ...additionalRepos];
 
@@ -211,11 +179,10 @@ export const handler = async (args: Args): Promise<void> => {
 	console.error('preparing repositories...');
 	const prepareResults = await Promise.allSettled(
 		allRepos.map(async (repo) => {
-			const remoteUrl = normalizeRemote(repo.remote);
 			const display = `${repo.parsed.host}/${repo.parsed.path}`;
 			console.error(`  preparing: ${display}`);
 			await ensureRepo({
-				remote: remoteUrl,
+				remote: normalizeRemote(repo.remote),
 				cachePath: repo.cachePath,
 				branch: repo.branch,
 				deep: args.deep,
@@ -225,37 +192,37 @@ export const handler = async (args: Args): Promise<void> => {
 	);
 
 	// check for failures
-	const failures: string[] = [];
-	for (let i = 0; i < prepareResults.length; i++) {
-		const result = prepareResults[i]!;
-		if (result.status === 'rejected') {
-			const repo = allRepos[i]!;
-			const display = `${repo.parsed.host}/${repo.parsed.path}`;
-			failures.push(`  ${display}: ${result.reason}`);
+	{
+		const failures: string[] = [];
+		for (let i = 0; i < prepareResults.length; i++) {
+			const result = prepareResults[i]!;
+			if (result.status === 'rejected') {
+				const repo = allRepos[i]!;
+				const display = `${repo.parsed.host}/${repo.parsed.path}`;
+				failures.push(`  ${display}: ${result.reason}`);
+			}
+		}
+
+		if (failures.length > 0) {
+			console.error('error: failed to prepare repositories:');
+			for (const failure of failures) {
+				console.error(failure);
+			}
+			process.exit(1);
 		}
 	}
 
-	if (failures.length > 0) {
-		console.error('error: failed to prepare repositories:');
-		for (const failure of failures) {
-			console.error(failure);
-		}
-		process.exit(1);
-	}
-
-	// create session directory and symlinks
+	// create scratch directory with symlinks to repos
 	const sessionPath = await createSessionDir();
 	let exitCode = 1;
 
 	try {
 		const dirMap = await buildSymlinkDir(sessionPath, allRepos);
-		const contextPrompt = buildMultiRepoContext(dirMap, args.deep);
+		const contextPrompt = buildRepoContext(dirMap, args.deep);
 		exitCode = await spawnClaude(sessionPath, contextPrompt, args);
 	} finally {
-		// always clean up session directory
 		await cleanupSessionDir(sessionPath);
 	}
 
 	process.exit(exitCode);
-	// #endregion
 };
