@@ -9,12 +9,12 @@
 	"singleQuote": true,
 	"bracketSpacing": true,
 
-	"experimentalSortImports": {
+	"sortImports": {
 		"groups": [["builtin", "bun"], ["external"], ["parent"], ["sibling", "index"]],
 		"customGroups": [
 			{
 				"groupName": "bun",
-				"elementNamePattern": ["bun", "bun:"]
+				"elementNamePattern": ["bun", "bun:*"]
 			}
 		]
 	},
