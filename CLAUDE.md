@@ -66,14 +66,16 @@ the source code is organized under `src/`:
   pause and ask for clarification when you're still unsure after looking into it
 - in plan mode, present the plan for review before exiting to allow for feedback or follow-up
   questions
-- when debugging problems, isolate the root cause first before attempting fixes: add logging,
-  reproduce the issue, narrow down the scope, and confirm the exact source of the problem
+- when debugging problems, isolate the root cause first before attempting fixes; suggest adding
+  logging and let the user reproduce and share the output, unless you can verify directly (e.g., by
+  running tests or reading existing error output)
 
 ### Claude Code-specific
 
 - Explore subagent may not be accurate; verify findings as needed
-- never spawn subagents to read and return file contents; read files directly in the main context.
-  subagents should perform searches or answer specific questions, not act as file I/O proxies
+- only spawn subagents when there is genuine independent work to parallelize (e.g. searching across
+  many files, answering a question requiring broad exploration.) never use them as file I/O proxies
+  — read files directly in the main context, and prefer direct tool calls when they suffice.
 
 ### using cgr for external context
 
